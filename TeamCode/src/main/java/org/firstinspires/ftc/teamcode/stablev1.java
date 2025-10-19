@@ -15,8 +15,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-@TeleOp(name="testv1")
-public class fullManual extends OpMode {
+@TeleOp(name="stablev1")
+public class stablev1 extends OpMode {
 
     double targetVelocity;
     double flyWheelRPM = 4000;
