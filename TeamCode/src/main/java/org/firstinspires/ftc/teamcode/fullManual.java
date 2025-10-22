@@ -92,6 +92,8 @@ public class fullManual extends OpMode {
         //Gate
         gate = hardwareMap.get(Servo.class, "gate");
 
+        // Chamber
+
     }
 
     @Override
