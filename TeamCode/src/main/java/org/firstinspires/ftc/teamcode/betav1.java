@@ -7,6 +7,7 @@
  */
 
 package org.firstinspires.ftc.teamcode;
+import com.arcrobotics.ftclib.util.InterpLUT;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -15,21 +16,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-@TeleOp(name="stablev1")
-public class stablev1 extends OpMode {
-
-    double targetVelocity;
-    double flyWheelRPM = 4000;
-    double flywheelTPR = 28;
-
-    boolean a_pressed_previous = false;
-    boolean b_pressed_previous = false;
-    boolean x_pressed_previous = false;
-    boolean dpad_up_pressed_previous = false;
-    boolean dpad_down_pressed_previous = false;
-
-    int flyWheelState = 0;
-    int chamberState = 0;
+@TeleOp(name="betav1")
+public class betav1 extends OpMode {
 
     CRServo intakeLeft = null;
     CRServo intakeRight = null;
@@ -47,8 +35,6 @@ public class stablev1 extends OpMode {
     DcMotor rightBack = null;
     DcMotorEx leftFlyWheel = null;
     DcMotorEx rightFlyWheel = null;
-
-
 
     @Override
     public void init() {
@@ -94,10 +80,40 @@ public class stablev1 extends OpMode {
 
     }
 
+    // Constants
+
+    boolean a_pressed_previous = false;
+    double targetVelocity;
+    double flyWheelRPM = 4000;
+    double flywheelTPR = 28;
+
     @Override
     public void loop() {
 
-        double targetTPS = (flyWheelRPM / 60) * flywheelTPR;
+        wheelMath();
+
+        targetVelocity = (flyWheelRPM / 60) * flywheelTPR;
+        leftFlyWheel.setVelocity(targetVelocity);
+        rightFlyWheel.setVelocity(targetVelocity);
+
+        intakeLeft.setPower(1);
+        intakeRight.setPower(1);
+
+        if (gamepad1.a && !a_pressed_previous) {
+            if(gate.getPosition() == 1) {
+                gate.setPosition(0);
+            } else if (gate.getPosition() == 0) {
+                gate.setPosition(1);
+            }
+        }
+        a_pressed_previous = gamepad1.a;
+
+        telemetry.addData("Target RPM", flyWheelRPM);
+
+    }
+
+    // Methods
+    public void wheelMath() {
 
         double max;
 
@@ -126,68 +142,14 @@ public class stablev1 extends OpMode {
         rightFront.setPower(frontRightPower);
         rightBack.setPower(backRightPower);
 
-        intakeLeft.setPower(1);
-        intakeRight.setPower(1);
+    }
 
-        if (gamepad1.a && !a_pressed_previous) {
-            if(gate.getPosition() == 1) {
-                gate.setPosition(0);
-            } else if (gate.getPosition() == 0) {
-                gate.setPosition(1);
-            }
-        }
-        a_pressed_previous = gamepad1.a;
+    public void TrainingData() {
 
-        if (gamepad1.b && !b_pressed_previous) {
-            if (flyWheelState == 1) {
-                flyWheelState = 0;
-            } else if (flyWheelState == 0) {
-                targetVelocity = 0;
-                flyWheelState = 1;
-            } else {
-                flyWheelState = 0;
-            }
-        }
-        b_pressed_previous = gamepad1.b;
+        InterpLUT lut = new InterpLUT();
 
 
-        leftFlyWheel.setVelocity(targetVelocity);
-        rightFlyWheel.setVelocity(targetVelocity);
-
-        // Manual Control Functions
-        if (flyWheelState == 0) {
-            targetVelocity = targetTPS;
-        }
-
-        if (gamepad1.dpad_up && !dpad_up_pressed_previous) {
-            flyWheelRPM += 100;
-        }
-        dpad_up_pressed_previous = gamepad1.dpad_up;
-
-        if (gamepad1.dpad_down && !dpad_down_pressed_previous) {
-            flyWheelRPM -= 100;
-        }
-        dpad_down_pressed_previous = gamepad1.dpad_down;
-
-        if (gamepad1.x && !x_pressed_previous) {
-            if(chamberState == 1) {
-                lowerLeftChamber.setPower(-1);
-                lowerRightChamber.setPower(1);
-                upperLeftChamber.setPower(-1);
-                upperRightChamber.setPower(1);
-                chamberState = 0;
-            } else if (chamberState == 0) {
-                lowerLeftChamber.setPower(0);
-                lowerRightChamber.setPower(0);
-                upperLeftChamber.setPower(0);
-                upperRightChamber.setPower(0);
-                chamberState = 1;
-            }
-        }
-
-        x_pressed_previous = gamepad1.x;
-
-        telemetry.addData("Target RPM", flyWheelRPM);
 
     }
+
 }

@@ -14,10 +14,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
-
+// Width 17 Length: 17.75
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(.5);
+            .mass(9.6);
 
     public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
 
@@ -31,14 +31,14 @@ public class Constants {
 
     public static MecanumConstants driveConstants = new MecanumConstants()
             .maxPower(1)
-            .rightFrontMotorName("rf")
-            .rightRearMotorName("rr")
-            .leftRearMotorName("lr")
-            .leftFrontMotorName("lf")
+            .rightFrontMotorName("rightFront")
+            .rightRearMotorName("rightBack")
+            .leftRearMotorName("leftBack")
+            .leftFrontMotorName("leftFront")
             .leftFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
             .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
-            .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD);
+            .rightRearMotorDirection(DcMotorSimple.Direction.REVERSE);
 
     // NOTE TO ME IN A WEEK IF TS DON'T WORK THERE IS 2 IMPORT OPTIONS FOR ANGLE UNIT UNIT TRY FLIPPING THEM
     public static OTOSConstants localizerConstants = new OTOSConstants()
@@ -47,7 +47,8 @@ public class Constants {
             .angleUnit(AngleUnit.RADIANS)
 
             // DO THIS
-            .linearScalar()
-            .offset();
+            .angularScalar(1)
+            .linearScalar(-97)
+            .offset(new SparkFunOTOS.Pose2D(0.0, 0.4,0));
 
 }
