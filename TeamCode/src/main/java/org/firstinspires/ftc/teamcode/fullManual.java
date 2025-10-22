@@ -31,9 +31,7 @@ public class fullManual extends OpMode {
     int flyWheelState = 0;
     int chamberState = 0;
 
-    CRServo intakeLeft = null;
-    CRServo intakeRight = null;
-
+    CRServo intake = null;
     CRServo lowerLeftChamber = null;
     CRServo lowerRightChamber = null;
     CRServo upperLeftChamber = null;
@@ -59,7 +57,7 @@ public class fullManual extends OpMode {
         lowerRightChamber = hardwareMap.get(CRServo.class, "backRightS");
         upperLeftChamber = hardwareMap.get(CRServo.class, "frontLeftS");
         upperRightChamber = hardwareMap.get(CRServo.class, "frontRightS");
-        specialChamber = harwareMap.get(CRServo.class, "specialS")
+        specialChamber = hardwareMap.get(CRServo.class, "specialS");
 
         // Intake
         intake = hardwareMap.get(CRServo.class, "intake");
