@@ -15,7 +15,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-@TeleOp(name="manaulControlv1")
+@TeleOp(name="manaulControlv2")
 public class fullManual extends OpMode {
 
     double targetVelocity;
