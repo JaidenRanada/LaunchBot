@@ -15,7 +15,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-@TeleOp(name="testv1")
+@TeleOp(name="manaulControlv1")
 public class fullManual extends OpMode {
 
     double targetVelocity;
@@ -38,6 +38,7 @@ public class fullManual extends OpMode {
     CRServo lowerRightChamber = null;
     CRServo upperLeftChamber = null;
     CRServo upperRightChamber = null;
+    CRServo specialChamber = null;
 
     Servo gate = null;
 
@@ -58,16 +59,11 @@ public class fullManual extends OpMode {
         lowerRightChamber = hardwareMap.get(CRServo.class, "backRightS");
         upperLeftChamber = hardwareMap.get(CRServo.class, "frontLeftS");
         upperRightChamber = hardwareMap.get(CRServo.class, "frontRightS");
-        lowerRightChamber.setDirection(DcMotorSimple.Direction.FORWARD);
-        lowerLeftChamber.setDirection(DcMotorSimple.Direction.FORWARD);
-        upperRightChamber.setDirection(DcMotorSimple.Direction.FORWARD);
-        upperLeftChamber.setDirection(DcMotorSimple.Direction.FORWARD);
+        specialChamber = harwareMap.get(CRServo.class, "specialS")
 
         // Intake
-        intakeLeft = hardwareMap.get(CRServo.class, "intakeLeft");
-        intakeRight = hardwareMap.get(CRServo.class, "intakeRight");
-        intakeLeft.setDirection(CRServo.Direction.REVERSE);
-        intakeRight.setDirection(CRServo.Direction.FORWARD);
+        intake = hardwareMap.get(CRServo.class, "intake");
+        intake.setDirection(CRServo.Direction.REVERSE);
 
         // Wheels
         leftFront = hardwareMap.get(DcMotor.class, "leftFront");
@@ -91,8 +87,6 @@ public class fullManual extends OpMode {
 
         //Gate
         gate = hardwareMap.get(Servo.class, "gate");
-
-        // Chamber
 
     }
 
@@ -128,8 +122,7 @@ public class fullManual extends OpMode {
         rightFront.setPower(frontRightPower);
         rightBack.setPower(backRightPower);
 
-        intakeLeft.setPower(1);
-        intakeRight.setPower(1);
+        intake.setPower(1);
 
         if (gamepad1.a && !a_pressed_previous) {
             if(gate.getPosition() == 1) {
@@ -178,16 +171,17 @@ public class fullManual extends OpMode {
                 lowerRightChamber.setPower(1);
                 upperLeftChamber.setPower(-1);
                 upperRightChamber.setPower(1);
+                specialChamber.setPower(-1);
                 chamberState = 0;
             } else if (chamberState == 0) {
                 lowerLeftChamber.setPower(0);
                 lowerRightChamber.setPower(0);
                 upperLeftChamber.setPower(0);
                 upperRightChamber.setPower(0);
+                specialChamber.setPower(1);
                 chamberState = 1;
             }
         }
-
         x_pressed_previous = gamepad1.x;
 
         telemetry.addData("Target RPM", flyWheelRPM);
