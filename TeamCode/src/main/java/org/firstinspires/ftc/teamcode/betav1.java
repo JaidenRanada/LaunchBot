@@ -71,7 +71,7 @@ public class betav1 extends OpMode {
         lowerRightChamber = hardwareMap.get(CRServo.class, "backRightS");
         upperLeftChamber = hardwareMap.get(CRServo.class, "frontLeftS");
         upperRightChamber = hardwareMap.get(CRServo.class, "frontRightS");
-        // specialChamber = hardwareMap.get(CRServo.class, "specialS");
+        specialChamber = hardwareMap.get(CRServo.class, "specialS");
 
         // Intake
         intakeLeft = hardwareMap.get(CRServo.class, "intakeLeft");
@@ -181,8 +181,11 @@ public class betav1 extends OpMode {
     public void gateControl() {
         if(gate.getPosition() == 1) {
             gate.setPosition(0);
+            specialChamber.setPower(1);
         } else if (gate.getPosition() == 0) {
             gate.setPosition(1);
+            specialChamber.setPower(0);
+
         }
     }
 

@@ -15,6 +15,10 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
 @TeleOp(name="manaulControlv2")
 public class fullManual extends OpMode {
 
@@ -47,6 +51,10 @@ public class fullManual extends OpMode {
     DcMotor rightBack = null;
     DcMotorEx leftFlyWheel = null;
     DcMotorEx rightFlyWheel = null;
+
+    VisionPortal visionPortal = null;
+
+    AprilTagProcessor aprilTag = null;
 
 
 
@@ -86,6 +94,16 @@ public class fullManual extends OpMode {
 
         //Gate
         gate = hardwareMap.get(Servo.class, "gate");
+
+        aprilTag = new AprilTagProcessor.Builder()
+                // Optional: Add lens intrinsics for more accurate distance results.
+                // .setLensIntrinsics(fx, fy, cx, cy)
+                .build();
+
+        visionPortal = new VisionPortal.Builder()
+                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1")) //"Webcam 1" must match your config
+                .addProcessor(aprilTag)
+                .build();
 
     }
 
