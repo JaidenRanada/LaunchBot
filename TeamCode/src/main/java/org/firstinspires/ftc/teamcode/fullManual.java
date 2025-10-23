@@ -144,7 +144,7 @@ public class fullManual extends OpMode {
         if (gamepad1.a && !a_pressed_previous) {
             if(gate.getPosition() == 1) {
                 gate.setPosition(0);
-                specialChamber.setPower(1);
+                specialChamber.setPower(-1);
             } else if (gate.getPosition() == 0) {
                 gate.setPosition(1);
                 specialChamber.setPower(0);
@@ -202,6 +202,8 @@ public class fullManual extends OpMode {
         x_pressed_previous = gamepad1.x;
 
         telemetry.addData("Target RPM", flyWheelRPM);
+        telemetry.addData("Actual RPM Left", "%.2f", (leftFlyWheel.getVelocity() * 60) / flywheelTPR);
+        telemetry.addData("Actual RPM Right", "%.2f", (rightFlyWheel.getVelocity() * 60) / flywheelTPR);
 
     }
 }
