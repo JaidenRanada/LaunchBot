@@ -19,7 +19,7 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
-@TeleOp(name="manaulControlv3")
+@TeleOp(name="manualRPMControl")
 public class fullManualReOrg extends OpMode {
 
     double flyWheelTargetVelocity;
@@ -213,10 +213,10 @@ public class fullManualReOrg extends OpMode {
     public void gateLogic() {
         if(gate.getPosition() == 1) {
             gate.setPosition(0);
-            specialChamber.setPower(-1);
+            specialChamber.setPower(0);
         } else if (gate.getPosition() == 0) {
             gate.setPosition(1);
-            specialChamber.setPower(0);
+            specialChamber.setPower(-1);
         }
     }
 

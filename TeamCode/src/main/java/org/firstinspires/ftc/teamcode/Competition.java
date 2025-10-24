@@ -19,7 +19,7 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
-@TeleOp(name="compV1")
+@TeleOp(name="compBot")
 public class Competition extends OpMode {
 
     boolean a_pressed_previous = false;
@@ -67,7 +67,7 @@ public class Competition extends OpMode {
         specialChamber = hardwareMap.get(CRServo.class, "specialChamber");
 
         // Intake
-        intake = hardwareMap.get(CRServo.class, "intakeRight");
+        intake = hardwareMap.get(CRServo.class, "intake");
         intake.setDirection(CRServo.Direction.FORWARD);
 
         // Wheels
@@ -128,20 +128,20 @@ public class Competition extends OpMode {
     public void wheelLogic() {
 
             if (gamepad1.dpad_down) {
-                axial = 1;
+                axial = -.25;
                 lateral = 0;
                 yaw = 0;
             } else if (gamepad1.dpad_up) {
-                axial = -1;
+                axial = .25;
                 lateral = 0;
                 yaw = 0;
             } else if (gamepad1.dpad_left) {
                 axial = 0;
-                lateral = -1;
+                lateral = -.25;
                 yaw = 0;
             } else if (gamepad1.dpad_right) {
             axial = 0;
-            lateral = 1;
+            lateral = .25;
             yaw = 0;
         } else {
              axial   = -gamepad1.left_stick_y;
@@ -182,9 +182,9 @@ public class Competition extends OpMode {
         if (gamepad2.left_bumper) {
             flyWheelDesiredRPM = 4000;
         } else if (gamepad2.right_bumper) {
-            flyWheelDesiredRPM = 6000;
+            flyWheelDesiredRPM = 5500;
         } else {
-            flyWheelDesiredRPM = 4000;
+            flyWheelDesiredRPM = 2000;
         }
 
         double flyWheelTargetVelocity = (flyWheelDesiredRPM / 60) * flywheelTPR;
@@ -196,10 +196,10 @@ public class Competition extends OpMode {
     public void gateLogic() {
         if(gate.getPosition() == 1) {
             gate.setPosition(0);
-            specialChamber.setPower(-1);
+            specialChamber.setPower(0);
         } else if (gate.getPosition() == 0) {
             gate.setPosition(1);
-            specialChamber.setPower(0);
+            specialChamber.setPower(-1);
         }
     }
 

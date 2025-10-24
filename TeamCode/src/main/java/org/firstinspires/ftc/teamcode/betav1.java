@@ -8,6 +8,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -24,6 +25,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import com.arcrobotics.ftclib.util.InterpLUT;
 
+@Disabled
 @TeleOp(name="betav1")
 public class betav1 extends OpMode {
 
