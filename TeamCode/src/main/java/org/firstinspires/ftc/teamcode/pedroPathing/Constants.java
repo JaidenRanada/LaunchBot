@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
+import com.pedropathing.control.FilteredPIDFCoefficients;
+import com.pedropathing.control.PIDFCoefficients;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.ftc.FollowerBuilder;
@@ -12,25 +14,25 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
-// Width 15 Length: 13.75
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .lateralZeroPowerAcceleration(-52)
-            .forwardZeroPowerAcceleration(-56)
-            .mass(9.6);
-
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.4, 0, 0.04, 0))
+            .headingPIDFCoefficients(new PIDFCoefficients(1, 0, 0.1, 0))
+            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.5,0.0,0.0,0.6,0.0))
+            .forwardZeroPowerAcceleration(54)
+            .lateralZeroPowerAcceleration(52)
+            .mass(9.8);
     public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)
-                .mecanumDrivetrain(driveConstants)
                 .pathConstraints(pathConstraints)
+                .mecanumDrivetrain(driveConstants)
                 .OTOSLocalizer(localizerConstants)
+
                 .build();
     }
-
     public static MecanumConstants driveConstants = new MecanumConstants()
             .maxPower(1)
             .rightFrontMotorName("rightFront")
@@ -40,20 +42,16 @@ public class Constants {
             .leftFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
             .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
-            .rightRearMotorDirection(DcMotorSimple.Direction.REVERSE)
-            .xVelocity(60)
-            .yVelocity(46);
+            .rightRearMotorDirection(DcMotorSimple.Direction.REVERSE);
 
 
-    // NOTE TO ME IN A WEEK IF TS DON'T WORK THERE IS 2 IMPORT OPTIONS FOR ANGLE UNIT UNIT TRY FLIPPING THEM
     public static OTOSConstants localizerConstants = new OTOSConstants()
             .hardwareMapName("otos")
             .linearUnit(DistanceUnit.INCH)
-            .angleUnit(AngleUnit.DEGREES)
-
-            // DO THIS
+            .angleUnit(AngleUnit.RADIANS)
+            .linearScalar(1.02)
             .angularScalar(1)
-            .linearScalar(1.1)
-            .offset(new SparkFunOTOS.Pose2D(0.4, 0,270));
+            .offset(new SparkFunOTOS.Pose2D(0.4,0,-90));
+
 
 }
