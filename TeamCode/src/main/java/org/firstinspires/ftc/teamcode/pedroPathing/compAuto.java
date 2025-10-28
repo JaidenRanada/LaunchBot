@@ -76,6 +76,7 @@ public class compAuto extends OpMode {
                 if (!follower.isBusy()) {
                     follower.followPath(Path2);
                 }
+                setPathState(2);
                 break;
             case 2:
                 if (!follower.isBusy()) {
