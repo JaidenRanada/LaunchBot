@@ -39,23 +39,54 @@ public class compAuto extends OpMode {
     private int pathState;
     public PathChain Path1;
     public PathChain Path2;
+    public PathChain Path3;
+    public PathChain Path4;
+    public PathChain Path5;
 
     public void Paths(Follower follower) {
-        Path1 = follower
+            Path1 = follower
+                    .pathBuilder()
+                    .addPath(
+                            new BezierLine(new Pose(22.000, 122.000), new Pose(59.500, 84.000))
+                    )
+                    .setLinearHeadingInterpolation(Math.toRadians(315), Math.toRadians(315))
+                    .build();
+
+            Path2 = follower
+                    .pathBuilder()
+                    .addPath(
+                            new BezierLine(new Pose(59.500, 84.000), new Pose(59.500, 84.000))
+                    )
+                    .setConstantHeadingInterpolation(Math.toRadians(135))
+                    .build();
+
+        Path3 = follower
                 .pathBuilder()
                 .addPath(
-                        new BezierLine(new Pose(56.000, 8.000), new Pose(56.000, 87.000))
+                        new BezierLine(new Pose(59.500, 84.000), new Pose(15.000, 84.000))
                 )
+                .setConstantHeadingInterpolation(Math.toRadians(360))
                 .build();
 
-        Path2 = follower
+        Path4 = follower
                 .pathBuilder()
                 .addPath(
-                        new BezierLine(new Pose(56.000, 87.000), new Pose(56.000, 87.000))
+                        new BezierLine(new Pose(15.000, 84.000), new Pose(59.500, 84.000))
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(135))
+                .setConstantHeadingInterpolation(Math.toRadians(360))
                 .build();
-    }
+
+        Path5 = follower
+                .pathBuilder()
+                .addPath(
+                        new BezierLine(new Pose(59.500, 84.000), new Pose(59.500, 84.000))
+                )
+                .setConstantHeadingInterpolation(Math.toRadians(135))
+                .build();
+
+        }
+
+
 
     public void autonomousPathUpdate() {
         switch (pathState) {
@@ -79,15 +110,57 @@ public class compAuto extends OpMode {
                 break;
             case 2:
                 if (!follower.isBusy()) {
-                    gate.setPosition(0);
-                    break;
+                    fireThree();
                 }
+                break;
+            case 3:
+                follower.followPath(Path3);
+                setPathState(4);
+                break;
+            case 4:
+                if(!follower.isBusy()) {
+                    follower.followPath(Path4);
+                }
+                setPathState(5);
+                break;
+                case 5:
+                if(!follower.isBusy()) {
+                    follower.followPath(Path5);
+                }
+                setPathState(6);
+                break;
+                case 6:
+                    if(!follower.isBusy()) {
+                        fireThree();
+                    }
+                break;
+
         }
     }
 
     /**
      * These change the states of the paths and actions. It will also reset the timers of the individual switches
      **/
+
+    boolean timerStarted = false;
+    Timer fireTimer = new Timer();
+    public void fireThree() {
+
+            gate.setPosition(0);
+
+            if (!timerStarted) {
+                fireTimer.resetTimer();
+                timerStarted = true;
+            }
+
+        if (fireTimer.getElapsedTimeSeconds() > 3) {
+            gate.setPosition(1);
+            timerStarted = false;
+            pathState = pathState+1;
+        }
+
+    }
+
     public void setPathState(int pState) {
         pathState = pState;
         pathTimer.resetTimer();
@@ -123,7 +196,6 @@ public class compAuto extends OpMode {
         pathTimer = new Timer();
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
-
 
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(new Pose(56.000, 8.000, Math.toRadians(90)));
@@ -164,7 +236,7 @@ public class compAuto extends OpMode {
     @Override
     public void start() {
         opmodeTimer.resetTimer();
-        setPathState(0);
+        setPathState(-1);
     }
 
     /**
