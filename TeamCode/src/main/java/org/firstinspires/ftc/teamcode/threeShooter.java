@@ -15,8 +15,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "Comp Auto", group = "Examples")
-public class compAuto extends OpMode {
+@Autonomous(name = "threeShooter", group = "Examples")
+public class threeShooter extends OpMode {
 
     double flyWheelTargetVelocity;
     double flyWheelRPM = 2400;
@@ -45,21 +45,21 @@ public class compAuto extends OpMode {
     public PathChain Path5;
 
     public void Paths(Follower follower) {
-            Path1 = follower
-                    .pathBuilder()
-                    .addPath(
-                            new BezierLine(new Pose(22.000, 122.000), new Pose(59.500, 84.000))
-                    )
-                    .setLinearHeadingInterpolation(Math.toRadians(315), Math.toRadians(315))
-                    .build();
+        Path1 = follower
+                .pathBuilder()
+                .addPath(
+                        new BezierLine(new Pose(22.000, 122.000), new Pose(59.500, 84.000))
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(315), Math.toRadians(315))
+                .build();
 
-            Path2 = follower
-                    .pathBuilder()
-                    .addPath(
-                            new BezierLine(new Pose(59.500, 84.000), new Pose(59.500, 84.000))
-                    )
-                    .setConstantHeadingInterpolation(Math.toRadians(135))
-                    .build();
+        Path2 = follower
+                .pathBuilder()
+                .addPath(
+                        new BezierLine(new Pose(59.500, 84.000), new Pose(59.500, 84.000))
+                )
+                .setConstantHeadingInterpolation(Math.toRadians(135))
+                .build();
 
         Path3 = follower
                 .pathBuilder()
@@ -85,7 +85,10 @@ public class compAuto extends OpMode {
                 .setConstantHeadingInterpolation(Math.toRadians(135))
                 .build();
 
-        }
+    }
+
+
+
     public void autonomousPathUpdate() {
         switch (pathState) {
             case -1:
@@ -108,31 +111,10 @@ public class compAuto extends OpMode {
                 break;
             case 2:
                 if (!follower.isBusy()) {
-                    fireThree();
+                    gate.setPosition(0);
                 }
+                pathState = 999;
                 break;
-            case 3:
-                follower.followPath(Path3, 0.25, true);
-                setPathState(4);
-                break;
-            case 4:
-                if(!follower.isBusy()) {
-                    follower.followPath(Path4);
-                }
-                setPathState(5);
-                break;
-                case 5:
-                if(!follower.isBusy()) {
-                    follower.followPath(Path5);
-                }
-                setPathState(6);
-                break;
-                case 6:
-                    if(!follower.isBusy()) {
-                        fireThree();
-                    }
-                break;
-
         }
     }
 
@@ -144,12 +126,12 @@ public class compAuto extends OpMode {
     Timer fireTimer = new Timer();
     public void fireThree() {
 
-            gate.setPosition(0);
+        gate.setPosition(0);
 
-            if (!timerStarted) {
-                fireTimer.resetTimer();
-                timerStarted = true;
-            }
+        if (!timerStarted) {
+            fireTimer.resetTimer();
+            timerStarted = true;
+        }
 
         if (fireTimer.getElapsedTimeSeconds() > 3) {
             gate.setPosition(1);
