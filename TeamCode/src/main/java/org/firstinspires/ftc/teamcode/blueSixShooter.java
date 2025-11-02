@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode; // make sure this aligns with class location
 
-import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
@@ -16,8 +15,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "BlueThreeShooter", group = "Examples")
-public class threeShooter extends OpMode {
+@Autonomous(name = "BlueSix", group = "Examples")
+public class blueSixShooter extends OpMode {
 
     double flyWheelTargetVelocity;
     double flyWheelRPM = 1750;
@@ -41,14 +40,17 @@ public class threeShooter extends OpMode {
     private int pathState;
     public PathChain Path1;
     public PathChain Path2;
-
     public PathChain Path3;
+
+    public PathChain Path4;
+
+    public PathChain finalStage;
 
     public void Paths(Follower follower) {
         Path1 = follower
                 .pathBuilder()
                 .addPath(
-                        new BezierLine(new Pose(56, 17.75), new Pose(56, 87))
+                        new BezierLine(new Pose(56, 12.75), new Pose(56, 87))
                 )
                 .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(135))
                 .build();
@@ -62,6 +64,22 @@ public class threeShooter extends OpMode {
                 .build();
 
         Path3 = follower
+                .pathBuilder()
+                .addPath(
+                        new BezierLine(new Pose(56.000, 87.000), new Pose(18.000, 87.000))
+                )
+                .setConstantHeadingInterpolation(Math.toRadians(0))
+                .build();
+
+        Path4 = follower
+                .pathBuilder()
+                .addPath(
+                        new BezierLine(new Pose(18.000, 87.000), new Pose(56.000, 87.000))
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(135))
+                .build();
+
+        finalStage = follower
                 .pathBuilder()
                 .addPath(
                         new BezierLine(new Pose(56,87), new Pose(56,120))
@@ -90,10 +108,10 @@ public class threeShooter extends OpMode {
 
                 break;
             case 0:
-                follower.followPath(Path1,.75,true);
-                setPathState(2);
+                follower.followPath(Path1,1,true);
+                setPathState(1);
                 break;
-            case 2:
+            case 1:
                 if (!follower.isBusy()) {
                     if (Math.abs(leftFlyWheel.getVelocity() - targetTPS) < 25){
                         specialChamber.setPower(-1);
@@ -102,18 +120,40 @@ public class threeShooter extends OpMode {
                     }
                     gate.setPosition(1);
                 }
-                if (opmodeTimer.getElapsedTimeSeconds() > 16)
+                if (opmodeTimer.getElapsedTimeSeconds() > 10)
                 {
-                    setPathState(3);
+                    specialChamber.setPower(1);
+                    gate.setPosition(0);
+                    setPathState(2);
                 }
                 break;
+            case 2:
+                follower.followPath(Path3,.5,true);
+                setPathState(3);
+                break;
             case 3:
-                lowerLeftChamber.setPower(0);
-                lowerRightChamber.setPower(0);
-                upperLeftChamber.setPower(0);
-                upperRightChamber.setPower(0);
-                follower.followPath(Path3);
-                flyWheelRPM = 0;
+                if (!follower.isBusy()) {
+                    follower.followPath(Path4);
+                    setPathState(4);
+                }
+                break;
+            case 4:
+                if (!follower.isBusy()) {
+                    if (Math.abs(leftFlyWheel.getVelocity() - targetTPS) < 25){
+                        specialChamber.setPower(-1);
+                    } else {
+                        specialChamber.setPower(0);
+                    }
+                    gate.setPosition(1);
+                }
+                if (opmodeTimer.getElapsedTimeSeconds() > 27)
+                {
+                    gate.setPosition(0);
+                    specialChamber.setPower(1);
+                    setPathState(67);
+                }
+            case 67:
+                follower.followPath(finalStage);
                 setPathState(999);
                 break;
         }
@@ -167,7 +207,7 @@ public class threeShooter extends OpMode {
         opmodeTimer.resetTimer();
 
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(new Pose(56, 17.75, Math.toRadians(90)));
+        follower.setStartingPose(new Pose(56, 12.75, Math.toRadians(90)));
         Paths(follower);
 
         lowerLeftChamber = hardwareMap.get(CRServo.class, "backLeftS");
