@@ -4,6 +4,9 @@ repositories {
 
     // Pedropathing
     maven { url = "https://mymaven.bylazar.com/releases" }
+
+    // FTC Dashboard
+    maven { url = 'https://maven.brott.dev/' }
 }
 
 dependencies {
@@ -24,6 +27,11 @@ dependencies {
 
     //FTC LIB
     implementation 'org.ftclib.ftclib:core:2.1.1' // core
+
+    // FTC Dashboard
+    implementation 'com.acmerobotics.dashboard:dashboard:0.5.1'
+
+
 
 }
 

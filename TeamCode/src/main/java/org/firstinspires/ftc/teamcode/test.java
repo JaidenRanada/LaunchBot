@@ -1,13 +1,12 @@
 package org.firstinspires.ftc.teamcode; // make sure this aligns with class location
 
-import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -16,11 +15,11 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "BlueThreeShooter", group = "Examples")
-public class threeShooter extends OpMode {
+@TeleOp(name = "test", group = "Examples")
+public class test extends OpMode {
 
     double flyWheelTargetVelocity;
-    double flyWheelRPM = 1750;
+    double flyWheelRPM = 1700;
     double flywheelTPR = 28;
     CRServo lowerLeftChamber = null;
     CRServo lowerRightChamber = null;
@@ -42,106 +41,27 @@ public class threeShooter extends OpMode {
     public PathChain Path1;
     public PathChain Path2;
 
-    public PathChain Path3;
-
-    public void Paths(Follower follower) {
-        Path1 = follower
-                .pathBuilder()
-                .addPath(
-                        new BezierLine(new Pose(56, 17.75), new Pose(56, 87))
-                )
-                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(135))
-                .build();
-
-        Path2 = follower
-                .pathBuilder()
-                .addPath(
-                        new BezierLine(new Pose(56, 87), new Pose(56, 87))
-                )
-                .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(180))
-                .build();
-
-        Path3 = follower
-                .pathBuilder()
-                .addPath(
-                        new BezierLine(new Pose(56,87), new Pose(56,120))
-                )
-                .setLinearHeadingInterpolation(Math.toRadians(135) , Math.toRadians(90))
-                .build();
-    }
 
 
-
-    double VelTolerance = 0.05;
-    public void autonomousPathUpdate(double targetTPS) {
-
-        switch (pathState) {
-            case -1:
-                gate.setPosition(0);
-                lowerLeftChamber.setPower(-1);
-                lowerRightChamber.setPower(1);
-                upperLeftChamber.setPower(-1);
-                upperRightChamber.setPower(1);
-                intake.setPower(1);
-
-                if (pathTimer.getElapsedTimeSeconds() > 2) {
-                    setPathState(0);
-                }
-
-                break;
-            case 0:
-                follower.followPath(Path1,.75,true);
-                setPathState(2);
-                break;
-            case 2:
-                if (!follower.isBusy()) {
-                    if (Math.abs(leftFlyWheel.getVelocity() - targetTPS) < 25){
-                        specialChamber.setPower(-1);
-                    } else {
-                        specialChamber.setPower(0);
-                    }
-                    gate.setPosition(1);
-                }
-                if (opmodeTimer.getElapsedTimeSeconds() > 16)
-                {
-                    setPathState(3);
-                }
-                break;
-            case 3:
-                lowerLeftChamber.setPower(0);
-                lowerRightChamber.setPower(0);
-                upperLeftChamber.setPower(0);
-                upperRightChamber.setPower(0);
-                follower.followPath(Path3);
-                flyWheelRPM = 0;
-                setPathState(999);
-                break;
-        }
-    }
-
-    /**
-     * These change the states of the paths and actions. It will also reset the timers of the individual switches
-     **/
-
-
-
-    public void setPathState(int pState) {
-        pathState = pState;
-        pathTimer.resetTimer();
-    }
-
-    /**
-     * This is the main loop of the OpMode, it will run repeatedly after clicking "Play".
-     **/
+    double VelTolerance = 25;
     double actualRPM = 0;
     double targetTPS = 0;
 
     @Override
     public void loop() {
 
-        // These loop the movements of the robot, these must be called continuously in order to work
-        follower.update();
-        autonomousPathUpdate(targetTPS);
+        gate.setPosition(1);
+        lowerLeftChamber.setPower(-1);
+        lowerRightChamber.setPower(1);
+        upperLeftChamber.setPower(-1);
+        upperRightChamber.setPower(1);
+        intake.setPower(1);
+
+                if (Math.abs(leftFlyWheel.getVelocity() - targetTPS) < VelTolerance){
+                    specialChamber.setPower(-1);
+                } else {
+                    specialChamber.setPower(0);
+                }
 
         targetTPS = (flyWheelRPM / 60) * flywheelTPR;
         leftFlyWheel.setVelocity(targetTPS);
@@ -168,7 +88,6 @@ public class threeShooter extends OpMode {
 
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(new Pose(56, 17.75, Math.toRadians(90)));
-        Paths(follower);
 
         lowerLeftChamber = hardwareMap.get(CRServo.class, "backLeftS");
         lowerRightChamber = hardwareMap.get(CRServo.class, "backRightS");
@@ -205,7 +124,6 @@ public class threeShooter extends OpMode {
     @Override
     public void start() {
         opmodeTimer.resetTimer();
-        setPathState(-1);
     }
 
     /**

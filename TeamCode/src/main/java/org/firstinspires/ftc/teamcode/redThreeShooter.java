@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode; // make sure this aligns with class location
 
+import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
@@ -15,11 +16,11 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "Comp Auto", group = "Examples")
-public class compAuto extends OpMode {
+@Autonomous(name = "RedThreeShooter", group = "Examples")
+public class redThreeShooter extends OpMode {
 
     double flyWheelTargetVelocity;
-    double flyWheelRPM = 2400;
+    double flyWheelRPM = 1750;
     double flywheelTPR = 28;
     CRServo lowerLeftChamber = null;
     CRServo lowerRightChamber = null;
@@ -40,99 +41,83 @@ public class compAuto extends OpMode {
     private int pathState;
     public PathChain Path1;
     public PathChain Path2;
+
     public PathChain Path3;
-    public PathChain Path4;
-    public PathChain Path5;
 
     public void Paths(Follower follower) {
-            Path1 = follower
-                    .pathBuilder()
-                    .addPath(
-                            new BezierLine(new Pose(22.000, 122.000), new Pose(59.500, 84.000))
-                    )
-                    .setConstantHeadingInterpolation(Math.toRadians(315))
-                    .build();
+        Path1 = follower
+                .pathBuilder()
+                .addPath(
+                        new BezierLine(new Pose(88, 17.75), new Pose(88, 92))
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(45))
+                .build();
 
-            Path2 = follower
-                    .pathBuilder()
-                    .addPath(
-                            new BezierLine(new Pose(59.500, 84.000), new Pose(59.500, 84.000))
-                    )
-                    .setConstantHeadingInterpolation(Math.toRadians(135))
-                    .build();
+        Path2 = follower
+                .pathBuilder()
+                .addPath(
+                        new BezierLine(new Pose(88, 87), new Pose(88, 87))
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(180))
+                .build();
 
         Path3 = follower
                 .pathBuilder()
                 .addPath(
-                        new BezierLine(new Pose(59.500, 84.000), new Pose(15.000, 84.000))
+                        new BezierLine(new Pose(88,92), new Pose(88,120))
                 )
-                .setConstantHeadingInterpolation(Math.toRadians(360))
+                .setLinearHeadingInterpolation(Math.toRadians(135) , Math.toRadians(90))
                 .build();
+    }
 
-        Path4 = follower
-                .pathBuilder()
-                .addPath(
-                        new BezierLine(new Pose(15.000, 84.000), new Pose(59.500, 84.000))
-                )
-                .setConstantHeadingInterpolation(Math.toRadians(360))
-                .build();
 
-        Path5 = follower
-                .pathBuilder()
-                .addPath(
-                        new BezierLine(new Pose(59.500, 84.000), new Pose(59.500, 84.000))
-                )
-                .setConstantHeadingInterpolation(Math.toRadians(135))
-                .build();
 
-        }
-    public void autonomousPathUpdate() {
+    double VelTolerance = 0.05;
+    public void autonomousPathUpdate(double targetTPS) {
+
         switch (pathState) {
             case -1:
+                gate.setPosition(0);
                 lowerLeftChamber.setPower(-1);
                 lowerRightChamber.setPower(1);
                 upperLeftChamber.setPower(-1);
                 upperRightChamber.setPower(1);
                 intake.setPower(1);
-                setPathState(0);
+
+                if (pathTimer.getElapsedTimeSeconds() > 2) {
+                    setPathState(0);
+                }
+
                 break;
             case 0:
-                follower.followPath(Path1);
-                setPathState(1);
-                break;
-            case 1:
-                if (!follower.isBusy()) {
-                    follower.followPath(Path2);
-                    setPathState(2);
-                }
+                follower.followPath(Path1,.75,true);
+                setPathState(2);
                 break;
             case 2:
                 if (!follower.isBusy()) {
-                    fireThree();
+                    if (Math.abs(leftFlyWheel.getVelocity() - targetTPS) < 25){
+                        specialChamber.setPower(-1);
+                    } else {
+                        specialChamber.setPower(0);
+                    }
+                    gate.setPosition(1);
+                }
+                if (opmodeTimer.getElapsedTimeSeconds() > 16)
+                {
+                    setPathState(3);
                 }
                 break;
             case 3:
-                follower.followPath(Path3, 0.25, true);
-                setPathState(4);
+                specialChamber.setPower(0);
+                lowerLeftChamber.setPower(0);
+                lowerRightChamber.setPower(0);
+                upperLeftChamber.setPower(0);
+                upperRightChamber.setPower(0);
+                follower.followPath(Path3);
+                flyWheelRPM = 0;
+                follower.followPath(Path3);
+                setPathState(999);
                 break;
-            case 4:
-                if(!follower.isBusy()) {
-                    follower.followPath(Path4);
-                    setPathState(5);
-                }
-                break;
-                case 5:
-                if(!follower.isBusy()) {
-                    follower.followPath(Path5);
-                }
-                setPathState(6);
-                break;
-                case 6:
-                    if(!follower.isBusy()) {
-                        fireThree();
-                    }
-                break;
-
         }
     }
 
@@ -140,24 +125,7 @@ public class compAuto extends OpMode {
      * These change the states of the paths and actions. It will also reset the timers of the individual switches
      **/
 
-    boolean timerStarted = false;
-    Timer fireTimer = new Timer();
-    public void fireThree() {
 
-            gate.setPosition(0);
-
-            if (!timerStarted) {
-                fireTimer.resetTimer();
-                timerStarted = true;
-            }
-
-        if (fireTimer.getElapsedTimeSeconds() > 3) {
-            gate.setPosition(1);
-            timerStarted = false;
-            pathState = pathState+1;
-        }
-
-    }
 
     public void setPathState(int pState) {
         pathState = pState;
@@ -167,14 +135,17 @@ public class compAuto extends OpMode {
     /**
      * This is the main loop of the OpMode, it will run repeatedly after clicking "Play".
      **/
+    double actualRPM = 0;
+    double targetTPS = 0;
+
     @Override
     public void loop() {
 
         // These loop the movements of the robot, these must be called continuously in order to work
         follower.update();
-        autonomousPathUpdate();
+        autonomousPathUpdate(targetTPS);
 
-        double targetTPS = (flyWheelRPM / 60) * flywheelTPR;
+        targetTPS = (flyWheelRPM / 60) * flywheelTPR;
         leftFlyWheel.setVelocity(targetTPS);
         rightFlyWheel.setVelocity(targetTPS);
 
@@ -182,7 +153,9 @@ public class compAuto extends OpMode {
         telemetry.addData("path state", pathState);
         telemetry.addData("x", follower.getPose().getX());
         telemetry.addData("y", follower.getPose().getY());
-        telemetry.addData("heading", follower.getPose().getHeading());
+        telemetry.addData("heading", Math.toDegrees(follower.getPose().getHeading()));
+        telemetry.addData("lefttargetTPS",targetTPS);
+        telemetry.addData("leftActualTPS",leftFlyWheel.getVelocity());
         telemetry.update();
     }
 
@@ -196,7 +169,7 @@ public class compAuto extends OpMode {
         opmodeTimer.resetTimer();
 
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(new Pose(22, 122, Math.toRadians(315)));
+        follower.setStartingPose(new Pose(88, 17.75, Math.toRadians(90)));
         Paths(follower);
 
         lowerLeftChamber = hardwareMap.get(CRServo.class, "backLeftS");
