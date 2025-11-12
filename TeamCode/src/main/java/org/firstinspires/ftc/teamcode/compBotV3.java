@@ -156,6 +156,8 @@ public class compBotV3 extends OpMode {
                             .setLinearHeadingInterpolation(follower.getHeading(), TARGET_LOCATION.minus(follower.getPose()).getAsVector().getTheta())
                             .build()
             );
+        } else {
+            wheelLogic();
         }
 
         if (gamepad2.a && !a_pressed_previous) {
@@ -163,7 +165,7 @@ public class compBotV3 extends OpMode {
         }
         a_pressed_previous = gamepad2.a;
 
-        wheelLogic();
+
         flyWheelLogic();
         chamberLogic();
         intake.setPower(1);
