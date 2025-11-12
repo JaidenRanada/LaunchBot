@@ -7,9 +7,6 @@
  */
 
 package org.firstinspires.ftc.teamcode;
-import com.pedropathing.ftc.FTCCoordinates;
-import com.pedropathing.geometry.PedroCoordinates;
-import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -32,17 +29,18 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+
+import java.util.List;
 
 @TeleOp(name="compBotV3")
 public class compBotV3 extends OpMode {
 
     //height 17
 
-    private Position cameraPosition = new Position(DistanceUnit.INCH,
+    private final Position cameraPosition = new Position(DistanceUnit.INCH,
             1, 2.125, 8.5, 0);
-    private YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
+    private final YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
             0, -90, 0, 0);
 
     boolean dpad_up_pressed_previous = false;
@@ -177,11 +175,15 @@ public class compBotV3 extends OpMode {
 
     }
 
-    AprilTagDetection detection;
-
     private Pose getRobotPoseFromCamera() {
+        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+        if (currentDetections.isEmpty()) {
+            return follower.getPose();
+        }
 
-        if (detection.robotPose.getPosition() == null)
+        AprilTagDetection detection = currentDetections.get(0);
+
+        if (detection.robotPose == null || detection.robotPose.getPosition() == null)
             {
                 return follower.getPose();
             } else {
@@ -284,4 +286,3 @@ public class compBotV3 extends OpMode {
     }
 
 }
-
