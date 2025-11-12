@@ -6,8 +6,7 @@
 
  */
 
-package org.firstinspires.ftc.teamcode;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+package org.firstinspires.ftc.teamcode.archive;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -20,24 +19,10 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
-@Disabled
-@TeleOp(name="fullManualv4")
-public class fullManual extends OpMode {
-
-    double flyWheelTargetVelocity;
-    double flyWheelRPM = 4000;
-    double flywheelTPR = 28;
+@TeleOp(name="compBot")
+public class Competition extends OpMode {
 
     boolean a_pressed_previous = false;
-    boolean b_pressed_previous = false;
-    boolean x_pressed_previous = false;
-    boolean dpad_up_pressed_previous = false;
-    boolean dpad_down_pressed_previous = false;
-
-    int flyWheelState = 0;
-    int chamberState = 0;
-
-    CRServo intakeRight = null;
 
     CRServo lowerLeftChamber = null;
     CRServo lowerRightChamber = null;
@@ -45,20 +30,31 @@ public class fullManual extends OpMode {
     CRServo upperRightChamber = null;
     CRServo specialChamber = null;
 
-    Servo gate = null;
+    CRServo intake = null;
 
     DcMotor leftFront = null;
     DcMotor leftBack = null;
     DcMotor rightFront = null;
     DcMotor rightBack = null;
+
+    double max;
+    double axial;
+    double lateral;
+    double yaw;
+    double frontLeftPower;
+    double frontRightPower;
+    double backLeftPower;
+    double backRightPower;
+
     DcMotorEx leftFlyWheel = null;
     DcMotorEx rightFlyWheel = null;
-
-    VisionPortal visionPortal = null;
+    double flyWheelDesiredRPM = 4000;
+    double flywheelTPR = 28;
+    
+    Servo gate = null;
 
     AprilTagProcessor aprilTag = null;
-
-
+    VisionPortal visionPortal = null;
 
     @Override
     public void init() {
@@ -71,8 +67,8 @@ public class fullManual extends OpMode {
         specialChamber = hardwareMap.get(CRServo.class, "specialChamber");
 
         // Intake
-        intakeRight = hardwareMap.get(CRServo.class, "intakeRight");
-        intakeRight.setDirection(CRServo.Direction.FORWARD);
+        intake = hardwareMap.get(CRServo.class, "intake");
+        intake.setDirection(CRServo.Direction.FORWARD);
 
         // Wheels
         leftFront = hardwareMap.get(DcMotor.class, "leftFront");
@@ -97,13 +93,12 @@ public class fullManual extends OpMode {
         //Gate
         gate = hardwareMap.get(Servo.class, "gate");
 
+        // Vision
         aprilTag = new AprilTagProcessor.Builder()
-                // Optional: Add lens intrinsics for more accurate distance results.
-                // .setLensIntrinsics(fx, fy, cx, cy)
                 .build();
 
         visionPortal = new VisionPortal.Builder()
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1")) //"Webcam 1" must match your config
+                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .addProcessor(aprilTag)
                 .build();
 
@@ -112,18 +107,52 @@ public class fullManual extends OpMode {
     @Override
     public void loop() {
 
-        double targetTPS = (flyWheelRPM / 60) * flywheelTPR;
+        if (gamepad2.a && !a_pressed_previous) {
+            gateLogic();
+        }
+        a_pressed_previous = gamepad2.a;
 
-        double max;
+        wheelLogic();
+        flyWheelLogic();
+        chamberLogic();
+        intake.setPower(1);
 
-        double axial   = -gamepad1.left_stick_y;
-        double lateral =  gamepad1.left_stick_x;
-        double yaw     =  gamepad1.right_stick_x;
 
-        double frontLeftPower  = axial + lateral + yaw;
-        double frontRightPower = axial - lateral - yaw;
-        double backLeftPower   = axial - lateral + yaw;
-        double backRightPower  = axial + lateral - yaw;
+        telemetry.addData("Target RPM", flyWheelDesiredRPM);
+        telemetry.addData("Actual RPM Left", "%.2f", (leftFlyWheel.getVelocity() * 60) / flywheelTPR);
+        telemetry.addData("Actual RPM Right", "%.2f", (rightFlyWheel.getVelocity() * 60) / flywheelTPR);
+
+    }
+
+    // Methods
+    public void wheelLogic() {
+
+            if (gamepad1.dpad_down) {
+                axial = -.25;
+                lateral = 0;
+                yaw = 0;
+            } else if (gamepad1.dpad_up) {
+                axial = .25;
+                lateral = 0;
+                yaw = 0;
+            } else if (gamepad1.dpad_left) {
+                axial = 0;
+                lateral = -.25;
+                yaw = 0;
+            } else if (gamepad1.dpad_right) {
+            axial = 0;
+            lateral = .25;
+            yaw = 0;
+        } else {
+             axial   = -gamepad1.left_stick_y;
+             lateral =  gamepad1.left_stick_x;
+             yaw     =  gamepad1.right_stick_x;
+        }
+
+        frontLeftPower  = axial + lateral + yaw;
+        frontRightPower = axial - lateral - yaw;
+        backLeftPower   = axial - lateral + yaw;
+        backRightPower  = axial + lateral - yaw;
 
         max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
         max = Math.max(max, Math.abs(backLeftPower));
@@ -141,72 +170,37 @@ public class fullManual extends OpMode {
         rightFront.setPower(frontRightPower);
         rightBack.setPower(backRightPower);
 
-        intakeRight.setPower(1);
-
-        if (gamepad1.a && !a_pressed_previous) {
-            if(gate.getPosition() == 1) {
-                gate.setPosition(0);
-                specialChamber.setPower(-1);
-            } else if (gate.getPosition() == 0) {
-                gate.setPosition(1);
-                specialChamber.setPower(0);
-            }
+    }
+    public void chamberLogic() {
+            lowerLeftChamber.setPower(-1);
+            lowerRightChamber.setPower(1);
+            upperLeftChamber.setPower(-1);
+            upperRightChamber.setPower(1);
+    }
+    public void flyWheelLogic() {
+        
+        if (gamepad2.left_bumper) {
+            flyWheelDesiredRPM = 4000;
+        } else if (gamepad2.right_bumper) {
+            flyWheelDesiredRPM = 5500;
+        } else {
+            flyWheelDesiredRPM = 2000;
         }
 
-        a_pressed_previous = gamepad1.a;
-
-        if (gamepad1.b && !b_pressed_previous) {
-            if (flyWheelState == 1) {
-                flyWheelState = 0;
-            } else if (flyWheelState == 0) {
-                flyWheelTargetVelocity = 0;
-                flyWheelState = 1;
-            } else {
-                flyWheelState = 0;
-            }
-        }
-        b_pressed_previous = gamepad1.b;
-
+        double flyWheelTargetVelocity = (flyWheelDesiredRPM / 60) * flywheelTPR;
 
         leftFlyWheel.setVelocity(flyWheelTargetVelocity);
         rightFlyWheel.setVelocity(flyWheelTargetVelocity);
 
-        // Manual Control Functions
-        if (flyWheelState == 0) {
-            flyWheelTargetVelocity = targetTPS;
+    }
+    public void gateLogic() {
+        if(gate.getPosition() == 1) {
+            gate.setPosition(0);
+            specialChamber.setPower(0);
+        } else if (gate.getPosition() == 0) {
+            gate.setPosition(1);
+            specialChamber.setPower(-1);
         }
-
-        if (gamepad1.dpad_up && !dpad_up_pressed_previous) {
-            flyWheelRPM += 100;
-        }
-        dpad_up_pressed_previous = gamepad1.dpad_up;
-
-        if (gamepad1.dpad_down && !dpad_down_pressed_previous) {
-            flyWheelRPM -= 100;
-        }
-        dpad_down_pressed_previous = gamepad1.dpad_down;
-
-        if (gamepad1.x && !x_pressed_previous) {
-            if(chamberState == 1) {
-                lowerLeftChamber.setPower(-1);
-                lowerRightChamber.setPower(1);
-                upperLeftChamber.setPower(-1);
-                upperRightChamber.setPower(1);
-                chamberState = 0;
-            } else if (chamberState == 0) {
-                lowerLeftChamber.setPower(0);
-                lowerRightChamber.setPower(0);
-                upperLeftChamber.setPower(0);
-                upperRightChamber.setPower(0);
-                chamberState = 1;
-            }
-        }
-        x_pressed_previous = gamepad1.x;
-
-        telemetry.addData("Target RPM", flyWheelRPM);
-        telemetry.addData("Actual RPM Left", "%.2f", (leftFlyWheel.getVelocity() * 60) / flywheelTPR);
-        telemetry.addData("Actual RPM Right", "%.2f", (rightFlyWheel.getVelocity() * 60) / flywheelTPR);
-
     }
 
 }

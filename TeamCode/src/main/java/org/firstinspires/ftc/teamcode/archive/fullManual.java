@@ -6,8 +6,7 @@
 
  */
 
-package org.firstinspires.ftc.teamcode;
-
+package org.firstinspires.ftc.teamcode.archive;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -17,19 +16,27 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
-import com.arcrobotics.ftclib.util.InterpLUT;
-
 @Disabled
-@TeleOp(name="betav1")
-public class betav1 extends OpMode {
+@TeleOp(name="fullManualv4")
+public class fullManual extends OpMode {
 
-    CRServo intakeLeft = null;
+    double flyWheelTargetVelocity;
+    double flyWheelRPM = 4000;
+    double flywheelTPR = 28;
+
+    boolean a_pressed_previous = false;
+    boolean b_pressed_previous = false;
+    boolean x_pressed_previous = false;
+    boolean dpad_up_pressed_previous = false;
+    boolean dpad_down_pressed_previous = false;
+
+    int flyWheelState = 0;
+    int chamberState = 0;
+
     CRServo intakeRight = null;
 
     CRServo lowerLeftChamber = null;
@@ -47,23 +54,11 @@ public class betav1 extends OpMode {
     DcMotorEx leftFlyWheel = null;
     DcMotorEx rightFlyWheel = null;
 
-    private AprilTagProcessor aprilTag;
-    private VisionPortal visionPortal;
+    VisionPortal visionPortal = null;
 
-    // Constants and Starting Values
-    boolean a_pressed_previous = false;
-    double targetVelocity;
-    double flyWheelRPM = 4000;
-    double flywheelTPR = 28;
-    int state = 0;
-
-    public void TrainingData() {
-
-        InterpLUT lut = new InterpLUT();
+    AprilTagProcessor aprilTag = null;
 
 
-
-    }
 
     @Override
     public void init() {
@@ -73,12 +68,10 @@ public class betav1 extends OpMode {
         lowerRightChamber = hardwareMap.get(CRServo.class, "backRightS");
         upperLeftChamber = hardwareMap.get(CRServo.class, "frontLeftS");
         upperRightChamber = hardwareMap.get(CRServo.class, "frontRightS");
-        specialChamber = hardwareMap.get(CRServo.class, "specialS");
+        specialChamber = hardwareMap.get(CRServo.class, "specialChamber");
 
         // Intake
-        intakeLeft = hardwareMap.get(CRServo.class, "intakeLeft");
         intakeRight = hardwareMap.get(CRServo.class, "intakeRight");
-        intakeLeft.setDirection(CRServo.Direction.REVERSE);
         intakeRight.setDirection(CRServo.Direction.FORWARD);
 
         // Wheels
@@ -104,8 +97,6 @@ public class betav1 extends OpMode {
         //Gate
         gate = hardwareMap.get(Servo.class, "gate");
 
-        // Camera
-
         aprilTag = new AprilTagProcessor.Builder()
                 // Optional: Add lens intrinsics for more accurate distance results.
                 // .setLensIntrinsics(fx, fy, cx, cy)
@@ -118,39 +109,10 @@ public class betav1 extends OpMode {
 
     }
 
-    public void startOpMode() {
+    @Override
+    public void loop() {
 
-        intakeLeft.setPower(1);
-        intakeRight.setPower(1);
-
-        lowerLeftChamber.setPower(1);
-        lowerRightChamber.setPower(1);
-        upperLeftChamber.setPower(1);
-        upperRightChamber.setPower(1);
-
-        state = 1;
-
-    }
-
-    public void mainLoop() {
-        wheelMath();
-
-        targetVelocity = (flyWheelRPM / 60) * flywheelTPR;
-        leftFlyWheel.setVelocity(targetVelocity);
-        rightFlyWheel.setVelocity(targetVelocity);
-
-        if (gamepad1.a && !a_pressed_previous) {
-            gateControl();
-        }
-        a_pressed_previous = gamepad1.a;
-
-
-
-        telemetry.addData("Target RPM", flyWheelRPM);
-    }
-
-    // Methods
-    public void wheelMath() {
+        double targetTPS = (flyWheelRPM / 60) * flywheelTPR;
 
         double max;
 
@@ -179,29 +141,73 @@ public class betav1 extends OpMode {
         rightFront.setPower(frontRightPower);
         rightBack.setPower(backRightPower);
 
-    }
-    public void gateControl() {
-        if(gate.getPosition() == 1) {
-            gate.setPosition(0);
-            specialChamber.setPower(1);
-        } else if (gate.getPosition() == 0) {
-            gate.setPosition(1);
-            specialChamber.setPower(0);
+        intakeRight.setPower(1);
 
+        if (gamepad1.a && !a_pressed_previous) {
+            if(gate.getPosition() == 1) {
+                gate.setPosition(0);
+                specialChamber.setPower(-1);
+            } else if (gate.getPosition() == 0) {
+                gate.setPosition(1);
+                specialChamber.setPower(0);
+            }
         }
-    }
 
-    @Override
-    public void loop() {
+        a_pressed_previous = gamepad1.a;
 
-        switch(state) {
-            case 0:
-                startOpMode();
-                break;
-            case 1:
-                mainLoop();
-                break;
+        if (gamepad1.b && !b_pressed_previous) {
+            if (flyWheelState == 1) {
+                flyWheelState = 0;
+            } else if (flyWheelState == 0) {
+                flyWheelTargetVelocity = 0;
+                flyWheelState = 1;
+            } else {
+                flyWheelState = 0;
+            }
         }
+        b_pressed_previous = gamepad1.b;
+
+
+        leftFlyWheel.setVelocity(flyWheelTargetVelocity);
+        rightFlyWheel.setVelocity(flyWheelTargetVelocity);
+
+        // Manual Control Functions
+        if (flyWheelState == 0) {
+            flyWheelTargetVelocity = targetTPS;
+        }
+
+        if (gamepad1.dpad_up && !dpad_up_pressed_previous) {
+            flyWheelRPM += 100;
+        }
+        dpad_up_pressed_previous = gamepad1.dpad_up;
+
+        if (gamepad1.dpad_down && !dpad_down_pressed_previous) {
+            flyWheelRPM -= 100;
+        }
+        dpad_down_pressed_previous = gamepad1.dpad_down;
+
+        if (gamepad1.x && !x_pressed_previous) {
+            if(chamberState == 1) {
+                lowerLeftChamber.setPower(-1);
+                lowerRightChamber.setPower(1);
+                upperLeftChamber.setPower(-1);
+                upperRightChamber.setPower(1);
+                chamberState = 0;
+            } else if (chamberState == 0) {
+                lowerLeftChamber.setPower(0);
+                lowerRightChamber.setPower(0);
+                upperLeftChamber.setPower(0);
+                upperRightChamber.setPower(0);
+                chamberState = 1;
+            }
+        }
+        x_pressed_previous = gamepad1.x;
+
+        telemetry.addData("Target RPM", flyWheelRPM);
+        telemetry.addData("Actual RPM Left", "%.2f", (leftFlyWheel.getVelocity() * 60) / flywheelTPR);
+        telemetry.addData("Actual RPM Right", "%.2f", (rightFlyWheel.getVelocity() * 60) / flywheelTPR);
+
     }
 
 }
+

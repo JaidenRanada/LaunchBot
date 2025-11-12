@@ -15,7 +15,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@TeleOp(name = "test", group = "Examples")
+@TeleOp(name = "TPS Test")
 public class test extends OpMode {
 
     double flyWheelTargetVelocity;

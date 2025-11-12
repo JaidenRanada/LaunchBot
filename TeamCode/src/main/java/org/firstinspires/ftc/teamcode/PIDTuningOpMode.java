@@ -7,6 +7,7 @@
  */
 
 package org.firstinspires.ftc.teamcode;
+import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -14,13 +15,25 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+
+
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
-@TeleOp(name="compBotV2")
-public class compBotV2 extends OpMode {
+@Configurable
+@TeleOp(name="PIDTuner")
+public class PIDTuningOpMode extends OpMode {
+
+    static double flyWheelTargetVelocity = 0;
+
+    FtcDashboard dashboard = FtcDashboard.getInstance(); // Add this line
+
+    FlyWheelPID control = new FlyWheelPID(0.05,0,0);
 
     boolean dpad_up_pressed_previous = false;
     boolean dpad_down_pressed_previous = false;
@@ -55,9 +68,6 @@ public class compBotV2 extends OpMode {
 
     Servo gate = null;
 
-    AprilTagProcessor aprilTag = null;
-    VisionPortal visionPortal = null;
-
     @Override
     public void init() {
 
@@ -89,21 +99,11 @@ public class compBotV2 extends OpMode {
 
         leftFlyWheel.setDirection(DcMotorSimple.Direction.REVERSE);
         rightFlyWheel.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightFlyWheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        leftFlyWheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftFlyWheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightFlyWheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         //Gate
         gate = hardwareMap.get(Servo.class, "gate");
-
-        // Vision
-        aprilTag = new AprilTagProcessor.Builder()
-                .build();
-
-        visionPortal = new VisionPortal.Builder()
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
-                .addProcessor(aprilTag)
-                .build();
-
     }
 
     double fallbackRPM = 2000;
@@ -121,10 +121,21 @@ public class compBotV2 extends OpMode {
         chamberLogic();
         intake.setPower(1);
 
+        TelemetryPacket packet = new TelemetryPacket();
+
+        // Add data to the packet for FTC Dashboard
+        packet.put("Target RPM", flyWheelDesiredRPM);
+        packet.put("Actual RPM Left", (leftFlyWheel.getVelocity() * 60) / flywheelTPR);
+        packet.put("Actual RPM Right", (rightFlyWheel.getVelocity() * 60) / flywheelTPR);
+        packet.put("current velocity",leftFlyWheel.getVelocity());
+        packet.put("target velocity", flyWheelTargetVelocity);
+
+        // Send the packet to the dashboard
+        dashboard.sendTelemetryPacket(packet);
+
         telemetry.addData("Target RPM", flyWheelDesiredRPM);
         telemetry.addData("Actual RPM Left", "%.2f", (leftFlyWheel.getVelocity() * 60) / flywheelTPR);
         telemetry.addData("Actual RPM Right", "%.2f", (rightFlyWheel.getVelocity() * 60) / flywheelTPR);
-        telemetry.update();
 
     }
 
@@ -201,10 +212,10 @@ public class compBotV2 extends OpMode {
         }
         dpad_down_pressed_previous = gamepad2.dpad_down;
 
-        double flyWheelTargetVelocity = (flyWheelDesiredRPM / 60) * flywheelTPR;
 
-        leftFlyWheel.setVelocity(flyWheelTargetVelocity);
-        rightFlyWheel.setVelocity(flyWheelTargetVelocity);
+        double command = control.update(flyWheelTargetVelocity, leftFlyWheel.getVelocity());
+        leftFlyWheel.setPower(command);
+        rightFlyWheel.setPower(command);
 
     }
     public void gateLogic() {

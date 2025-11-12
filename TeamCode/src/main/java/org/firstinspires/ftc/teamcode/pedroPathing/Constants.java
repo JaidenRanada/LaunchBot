@@ -12,6 +12,7 @@ import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
@@ -44,13 +45,11 @@ public class Constants {
             .xVelocity(54)
             .yVelocity(47);
 
-
-
     public static OTOSConstants localizerConstants = new OTOSConstants()
             .hardwareMapName("otos")
             .linearUnit(DistanceUnit.INCH)
             .angleUnit(AngleUnit.RADIANS)
-            .linearScalar(1.02)
+            .linearScalar(2.75)
             .angularScalar(1)
             .offset(new SparkFunOTOS.Pose2D(0.4,0,Math.toRadians(-90)));
     }

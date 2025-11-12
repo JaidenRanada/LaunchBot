@@ -18,39 +18,39 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 @Autonomous(name = "BlueSix", group = "Examples")
 public class blueSixShooter extends OpMode {
 
-    double flyWheelTargetVelocity;
-    double flyWheelRPM = 1750;
-    double flywheelTPR = 28;
     CRServo lowerLeftChamber = null;
     CRServo lowerRightChamber = null;
     CRServo upperLeftChamber = null;
     CRServo upperRightChamber = null;
     CRServo specialChamber = null;
+    CRServo intake = null;
 
     Servo gate = null;
-
-    CRServo intake = null;
 
     DcMotorEx leftFlyWheel = null;
     DcMotorEx rightFlyWheel = null;
 
-    private Follower follower;
-    private Timer pathTimer, actionTimer, opmodeTimer;
-
-    private int pathState;
     public PathChain Path1;
     public PathChain Path2;
     public PathChain Path3;
-
     public PathChain Path4;
+    public PathChain Path5;
 
-    public PathChain finalStage;
+    double flyWheelRPM = 1750;
+    double flywheelTPR = 28;
+    double targetTPS = 0;
+
+    private int pathState;
+
+    private Follower follower;
+    private Timer pathTimer, actionTimer, opmodeTimer;
+
 
     public void Paths(Follower follower) {
         Path1 = follower
                 .pathBuilder()
                 .addPath(
-                        new BezierLine(new Pose(56, 12.75), new Pose(56, 87))
+                        new BezierLine(new Pose(56, 17.75), new Pose(56, 87))
                 )
                 .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(135))
                 .build();
@@ -79,7 +79,7 @@ public class blueSixShooter extends OpMode {
                 .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(135))
                 .build();
 
-        finalStage = follower
+        Path5 = follower
                 .pathBuilder()
                 .addPath(
                         new BezierLine(new Pose(56,87), new Pose(56,120))
@@ -88,30 +88,23 @@ public class blueSixShooter extends OpMode {
                 .build();
     }
 
-
-
-    double VelTolerance = 0.05;
     public void autonomousPathUpdate(double targetTPS) {
 
         switch (pathState) {
-            case -1:
+            case 0:
                 gate.setPosition(0);
                 lowerLeftChamber.setPower(-1);
                 lowerRightChamber.setPower(1);
                 upperLeftChamber.setPower(-1);
                 upperRightChamber.setPower(1);
                 intake.setPower(1);
-
-                if (pathTimer.getElapsedTimeSeconds() > 2) {
-                    setPathState(0);
-                }
-
-                break;
-            case 0:
-                follower.followPath(Path1,1,true);
-                setPathState(1);
+                    setPathState(1);
                 break;
             case 1:
+                follower.followPath(Path1,1,true);
+                setPathState(2);
+                break;
+            case 2:
                 if (!follower.isBusy()) {
                     if (Math.abs(leftFlyWheel.getVelocity() - targetTPS) < 25){
                         specialChamber.setPower(-1);
@@ -124,20 +117,20 @@ public class blueSixShooter extends OpMode {
                 {
                     specialChamber.setPower(1);
                     gate.setPosition(0);
-                    setPathState(2);
+                    setPathState(3);
                 }
-                break;
-            case 2:
-                follower.followPath(Path3,.5,true);
-                setPathState(3);
                 break;
             case 3:
-                if (!follower.isBusy()) {
-                    follower.followPath(Path4);
-                    setPathState(4);
-                }
+                follower.followPath(Path3,.25,true);
+                setPathState(4);
                 break;
             case 4:
+                if (!follower.isBusy()) {
+                    follower.followPath(Path4);
+                    setPathState(5);
+                }
+                break;
+            case 5:
                 if (!follower.isBusy()) {
                     if (Math.abs(leftFlyWheel.getVelocity() - targetTPS) < 25){
                         specialChamber.setPower(-1);
@@ -150,31 +143,19 @@ public class blueSixShooter extends OpMode {
                 {
                     gate.setPosition(0);
                     specialChamber.setPower(1);
-                    setPathState(67);
+                    setPathState(6);
                 }
-            case 67:
-                follower.followPath(finalStage);
+            case 6:
+                follower.followPath(Path5);
                 setPathState(999);
                 break;
         }
     }
 
-    /**
-     * These change the states of the paths and actions. It will also reset the timers of the individual switches
-     **/
-
-
-
     public void setPathState(int pState) {
         pathState = pState;
         pathTimer.resetTimer();
     }
-
-    /**
-     * This is the main loop of the OpMode, it will run repeatedly after clicking "Play".
-     **/
-    double actualRPM = 0;
-    double targetTPS = 0;
 
     @Override
     public void loop() {
@@ -197,17 +178,15 @@ public class blueSixShooter extends OpMode {
         telemetry.update();
     }
 
-    /**
-     * This method is called once at the init of the OpMode.
-     **/
     @Override
     public void init() {
+
         pathTimer = new Timer();
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
 
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(new Pose(56, 12.75, Math.toRadians(90)));
+        follower.setStartingPose(new Pose(56, 17.75, Math.toRadians(90)));
         Paths(follower);
 
         lowerLeftChamber = hardwareMap.get(CRServo.class, "backLeftS");
@@ -231,21 +210,14 @@ public class blueSixShooter extends OpMode {
 
     }
 
-    /**
-     * This method is called continuously after Init while waiting for "play".
-     **/
     @Override
     public void init_loop() {
     }
 
-    /**
-     * This method is called once at the start of the OpMode.
-     * It runs all the setup actions, including building paths and starting the path system
-     **/
     @Override
     public void start() {
         opmodeTimer.resetTimer();
-        setPathState(-1);
+        setPathState(0);
     }
 
     /**

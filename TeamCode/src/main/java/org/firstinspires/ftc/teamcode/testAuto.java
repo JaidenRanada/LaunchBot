@@ -10,7 +10,7 @@ import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "Example Auto", group = "Examples")
+@Autonomous(name = "Off The Line")
 public class testAuto extends OpMode {
 
     private Follower follower;
@@ -24,7 +24,7 @@ public class testAuto extends OpMode {
                     .pathBuilder()
                     .addPath(
                             new BezierLine(new Pose(72.000, 72.000), new Pose(72.000, 96.000)))
-                    .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(180))
+                    .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(90))
                     .build();
         }
 
