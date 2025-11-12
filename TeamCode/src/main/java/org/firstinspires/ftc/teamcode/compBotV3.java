@@ -46,6 +46,7 @@ public class compBotV3 extends OpMode {
     boolean dpad_up_pressed_previous = false;
     boolean dpad_down_pressed_previous = false;
     boolean a_pressed_previous = false;
+    boolean right_bumper_pressed_previous = false;
 
     CRServo lowerLeftChamber = null;
     CRServo lowerRightChamber = null;
@@ -142,23 +143,31 @@ public class compBotV3 extends OpMode {
     @Override
     public void loop() {
 
-    follower.update();
+        follower.update();
 
         if (gamepad1.left_bumper) {
             follower.setPose(getRobotPoseFromCamera());
         }
 
         if (gamepad1.right_bumper) {
-
-            follower.followPath(
-                    follower.pathBuilder()
-                            .addPath(new BezierLine(follower.getPose(), TARGET_LOCATION))
-                            .setLinearHeadingInterpolation(follower.getHeading(), TARGET_LOCATION.minus(follower.getPose()).getAsVector().getTheta())
-                            .build()
-            );
+            if (!right_bumper_pressed_previous) {
+                // Start following the path
+                follower.followPath(
+                        follower.pathBuilder()
+                                .addPath(new BezierLine(follower.getPose(), TARGET_LOCATION))
+                                .setLinearHeadingInterpolation(follower.getHeading(), TARGET_LOCATION.minus(follower.getPose()).getAsVector().getTheta())
+                                .build()
+                );
+            }
         } else {
+            if (right_bumper_pressed_previous) {
+                // Stop following the path
+                follower.breakFollowing();
+            }
             wheelLogic();
         }
+
+        right_bumper_pressed_previous = gamepad1.right_bumper;
 
         if (gamepad2.a && !a_pressed_previous) {
             gateLogic();
@@ -173,6 +182,7 @@ public class compBotV3 extends OpMode {
         telemetry.addData("Target RPM", flyWheelDesiredRPM);
         telemetry.addData("Actual RPM Left", "%.2f", (leftFlyWheel.getVelocity() * 60) / flywheelTPR);
         telemetry.addData("Actual RPM Right", "%.2f", (rightFlyWheel.getVelocity() * 60) / flywheelTPR);
+        telemetry.addData("Follower is busy", follower.isBusy());
         telemetry.update();
 
     }
