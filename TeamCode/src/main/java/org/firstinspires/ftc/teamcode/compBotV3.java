@@ -183,6 +183,8 @@ public class compBotV3 extends OpMode {
         telemetry.addData("Actual RPM Left", "%.2f", (leftFlyWheel.getVelocity() * 60) / flywheelTPR);
         telemetry.addData("Actual RPM Right", "%.2f", (rightFlyWheel.getVelocity() * 60) / flywheelTPR);
         telemetry.addData("Follower is busy", follower.isBusy());
+        telemetry.addData("FTC Pos ", getRobotPoseFromCamera().toString());
+        telemetry.addData("Pedro Pos ", follower.getPose().toString());
         telemetry.update();
 
     }
