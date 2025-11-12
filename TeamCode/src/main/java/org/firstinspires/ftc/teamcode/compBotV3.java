@@ -136,7 +136,7 @@ public class compBotV3 extends OpMode {
     double fallbackRPM = 2000;
 
 
-    Pose TARGET_LOCATION = new Pose(0, 0, 0);
+    Pose TARGET_LOCATION = new Pose(72, 72, 0);
 
 
     @Override
