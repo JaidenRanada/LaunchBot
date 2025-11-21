@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode; // make sure this aligns with class location
 
-import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
@@ -16,8 +15,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "RedThreeShooter", group = "Examples")
-public class redThreeShooter extends OpMode {
+@Autonomous(name = "red9", group = "Examples")
+public class red9 extends OpMode {
 
     double flyWheelTargetVelocity;
     double flyWheelRPM = 1750;
@@ -39,40 +38,87 @@ public class redThreeShooter extends OpMode {
     private Timer pathTimer, actionTimer, opmodeTimer;
 
     private int pathState;
+
+    // Poses
+
     public PathChain Path1;
     public PathChain Path2;
-
     public PathChain Path3;
+    public PathChain Path4;
+    public PathChain Path5;
+    public PathChain Path6;
+    public PathChain Path7;
+
+    double refX = 56;
+    double endX = 22;
+
+    Pose StartPos = new Pose(refX, ((17.75 / 2) + 4), Math.toRadians(90));
+    Pose ShootPos = new Pose(refX, 87, Math.toRadians(135));
+
+    Pose startPickUp1 = new Pose(refX, 84, Math.toRadians(0));
+    Pose startPickUp2 = new Pose(refX, 60, Math.toRadians(0));
+    Pose startPickUp3 = new Pose(refX, 36, Math.toRadians(0));
+
+    Pose endPickup1 = new Pose(endX, 84, Math.toRadians(0));
+    Pose endPickup2 = new Pose(endX, 60, Math.toRadians(0));
+    Pose endPickup3 = new Pose(endX, 36, Math.toRadians(0));
 
     public void Paths(Follower follower) {
         Path1 = follower
                 .pathBuilder()
                 .addPath(
-                        new BezierLine(new Pose(88, 17.75), new Pose(88, 87))
+                        new BezierLine(StartPos, ShootPos)
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(45))
+                .setLinearHeadingInterpolation(StartPos.getHeading(), ShootPos.getHeading())
                 .build();
 
         Path2 = follower
                 .pathBuilder()
                 .addPath(
-                        new BezierLine(new Pose(88, 87), new Pose(88, 87))
+                        new BezierLine(ShootPos, startPickUp1)
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(180))
+                .setLinearHeadingInterpolation(ShootPos.getHeading(), startPickUp1.getHeading())
                 .build();
 
         Path3 = follower
                 .pathBuilder()
                 .addPath(
-                        new BezierLine(new Pose(88,87), new Pose(88,110))
+                        new BezierLine(startPickUp1, endPickup1)
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(135) , Math.toRadians(90))
+                .setLinearHeadingInterpolation(startPickUp1.getHeading(), endPickup1.getHeading())
                 .build();
+
+        Path4 = follower
+                .pathBuilder()
+                .addPath(
+                        new BezierLine(endPickup1, ShootPos)
+                )
+                .setLinearHeadingInterpolation(endPickup1.getHeading(), ShootPos.getHeading())
+                .build();
+        Path5 = follower
+                .pathBuilder()
+                .addPath(
+                        new BezierLine(ShootPos, startPickUp2)
+                )
+                .setLinearHeadingInterpolation(ShootPos.getHeading(), startPickUp2.getHeading())
+                .build();
+        Path6 = follower
+                .pathBuilder()
+                .addPath(
+                        new BezierLine(startPickUp2, endPickup2)
+                )
+                .setLinearHeadingInterpolation(startPickUp2.getHeading(), endPickup2.getHeading())
+                .build();
+        Path7 = follower
+                .pathBuilder()
+                .addPath(
+                        new BezierLine(endPickup2, ShootPos)
+                )
+                .setLinearHeadingInterpolation(endPickup2.getHeading(), ShootPos.getHeading())
+                .build();
+
     }
 
-
-
-    double VelTolerance = 0.05;
     public void autonomousPathUpdate(double targetTPS) {
 
         switch (pathState) {
@@ -82,43 +128,106 @@ public class redThreeShooter extends OpMode {
                 lowerRightChamber.setPower(1);
                 upperLeftChamber.setPower(-1);
                 upperRightChamber.setPower(1);
-                intake.setPower(-1);
-                if (pathTimer.getElapsedTimeSeconds() > 14) {
-                    setPathState(0);
-                }
+                intake.setPower(1);
+                setPathState(0);
                 break;
             case 0:
-                follower.followPath(Path1,.75,true);
+                follower.followPath(Path1, 1, true);
                 setPathState(2);
                 break;
             case 2:
                 if (!follower.isBusy()) {
-                    specialChamber.setPower(-1);
-                    gate.setPosition(1);
-                }
-                if (pathTimer.getElapsedTimeSeconds() > 12)
-                {
-                    setPathState(3);
-                    specialChamber.setPower(0);
-                    gate.setPosition(0);
+                    shoot();
                 }
                 break;
+
             case 3:
-                specialChamber.setPower(0);
-                lowerLeftChamber.setPower(0);
-                lowerRightChamber.setPower(0);
-                upperLeftChamber.setPower(0);
-                upperRightChamber.setPower(0);
-                follower.followPath(Path3);
-                flyWheelRPM = 0;
-                setPathState(999);
+
+                if (!follower.isBusy()) {
+                    follower.followPath(Path2);
+                    setPathState(4);
+                }
+
                 break;
+            case 4:
+                if (!follower.isBusy()) {
+                    follower.followPath(Path3, 0.5, true);
+                    setPathState(5);
+                }
+
+                break;
+            case 5:
+                if (!follower.isBusy()) {
+                    follower.followPath(Path4);
+                }
+
+                break;
+            case 6:
+                if (!follower.isBusy()) {
+                    shoot();
+                }
+                break;
+            case 7:
+                follower.followPath(Path5);
+                setPathState(8);
+                break;
+            case 8:
+                if (!follower.isBusy()) {
+                    follower.followPath(Path6);
+                    setPathState(9);
+                }
+                break;
+            case 9:
+                if (!follower.isBusy()) {
+                    follower.followPath(Path7);
+                    setPathState(10);
+                }
+                break;
+            case 10:
+                if (!follower.isBusy()) {
+                    shoot();
+                }
+
+
+            case 98:
+                follower.followPath(
+                        follower.pathBuilder()
+                                .addPath(new BezierLine(follower.getPose(), new Pose(24,72) ) )
+                                .setConstantHeadingInterpolation(follower.getHeading())
+                                .build()
+                );
+                if (!follower.isBusy()) {
+                    setPathState(99);
+                }
+                break;
+            case 99:
+                follower.followPath(
+                        follower.pathBuilder()
+                                .addPath(new BezierLine(new Pose(24,72), new Pose(12,72) ) )
+                                .setConstantHeadingInterpolation(follower.getHeading())
+                                .build()
+                );
+                break;
+        }
+
+        if (opmodeTimer.getElapsedTimeSeconds() > 27) {
+            setPathState(98);
         }
     }
 
-    /**
-     * These change the states of the paths and actions. It will also reset the timers of the individual switches
-     **/
+    public void shoot() {
+        if (Math.abs(leftFlyWheel.getVelocity() - targetTPS) < 25) {
+            specialChamber.setPower(-1);
+        } else {
+            specialChamber.setPower(0);
+        }
+        gate.setPosition(1);
+        if (pathTimer.getElapsedTimeSeconds() > 7) {
+            setPathState(pathState + 1);
+            gate.setPosition(0);
+        }
+    }
+
 
 
 
@@ -164,7 +273,7 @@ public class redThreeShooter extends OpMode {
         opmodeTimer.resetTimer();
 
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(new Pose(88, 17.75, Math.toRadians(90)));
+        follower.setStartingPose(StartPos);
         Paths(follower);
 
         lowerLeftChamber = hardwareMap.get(CRServo.class, "backLeftS");
@@ -182,7 +291,7 @@ public class redThreeShooter extends OpMode {
         leftFlyWheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         intake = hardwareMap.get(DcMotor.class, "intake");
-        intake.setDirection(DcMotor.Direction.FORWARD);
+        intake.setDirection(CRServo.Direction.REVERSE);
 
         gate = hardwareMap.get(Servo.class, "gate");
 

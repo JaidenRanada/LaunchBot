@@ -7,7 +7,7 @@
  */
 
 package org.firstinspires.ftc.teamcode;
-import com.arcrobotics.ftclib.geometry.Pose2d;
+import com.pedropathing.paths.HeadingInterpolator;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -16,46 +16,27 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-import com.pedropathing.follower.Follower;
-import com.pedropathing.ftc.FTCCoordinates;
-import com.pedropathing.geometry.BezierLine;
-import com.pedropathing.geometry.PedroCoordinates;
-import com.pedropathing.geometry.Pose;
-
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
-import java.util.List;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierLine;
+import com.pedropathing.geometry.Pose;
+import com.pedropathing.paths.PathChain;
+import com.pedropathing.util.Timer;
+import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@TeleOp(name="compBotV3")
-public class compBotV3 extends OpMode {
 
-    private static final Pose TARGET_POINT = new Pose(0, 144, 0);
 
-    // P-Controller gain for turning. TUNE THIS VALUE.
-    // Start low (e.g., 0.4) and increase if the response is too slow.
-    // Decrease if the robot oscillates or is too aggressive.
-    private static final double POINT_LOCK_GAIN = 0.5;
 
-    // Deadband in degrees. The robot won't correct if its heading is within this range.
-    private static final double HEADING_TOLERANCE_DEGREES = 1.0;
-
-    private final Position cameraPosition = new Position(DistanceUnit.INCH,
-            1, 2.125, 8.5, 0);
-    private final YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
-            0, -90, 0, 0);
+@TeleOp(name="compBotV4")
+public class compBotV4 extends OpMode {
 
     boolean dpad_up_pressed_previous = false;
     boolean dpad_down_pressed_previous = false;
     boolean a_pressed_previous = false;
-    boolean right_bumper_pressed_previous = false;
+    boolean x_pressed_previous = false;
 
     CRServo lowerLeftChamber = null;
     CRServo lowerRightChamber = null;
@@ -91,6 +72,7 @@ public class compBotV3 extends OpMode {
 
     private Follower follower;
 
+
     @Override
     public void init() {
 
@@ -103,7 +85,7 @@ public class compBotV3 extends OpMode {
 
         // Intake
         intake = hardwareMap.get(DcMotor.class, "intake");
-        intake.setDirection(CRServo.Direction.REVERSE);
+        intake.setDirection(DcMotor.Direction.FORWARD);
 
         // Wheels
         leftFront = hardwareMap.get(DcMotor.class, "leftFront");
@@ -130,7 +112,6 @@ public class compBotV3 extends OpMode {
 
         // Vision
         aprilTag = new AprilTagProcessor.Builder()
-                .setCameraPose(cameraPosition, cameraOrientation)
                 .build();
 
         visionPortal = new VisionPortal.Builder()
@@ -139,92 +120,67 @@ public class compBotV3 extends OpMode {
                 .build();
 
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(new Pose(0,0,0)); //set your starting pose
+        follower.setStartingPose(new Pose(0,0,90)); //set your starting pose
 
     }
 
     double fallbackRPM = 2000;
 
+    boolean start = true;
 
-    Pose TARGET_LOCATION = new Pose(72, 72, 0);
+    boolean locked = false;
 
+    int lockState = 1;
+
+    @Override
+    public void start() {
+        follower.startTeleopDrive();
+    }
 
     @Override
     public void loop() {
 
         follower.update();
 
-        if (gamepad1.left_bumper) {
-            follower.setPose(getRobotPoseFromCamera());
-        }
-
-        if (gamepad1.right_bumper) {
-            if (!right_bumper_pressed_previous) {
-                // Start following the path
-
-                double deltaX = TARGET_LOCATION.getX() - follower.getPose().getX();
-                double deltaY = TARGET_LOCATION.getY() - follower.getPose().getY();
-
-                double absoluteAngleToTarget = Math.atan2(deltaY, deltaX);
-
-                follower.followPath(
-                        follower.pathBuilder()
-                                .addPath(new BezierLine(follower.getPose(), follower.getPose()))
-                                .setLinearHeadingInterpolation(follower.getHeading(), absoluteAngleToTarget)
-                                .build()
-                );
-            }
-        } else {
-            if (right_bumper_pressed_previous) {
-                // Stop following the path
-                follower.breakFollowing();
-            }
-            wheelLogic();
-        }
-
-        right_bumper_pressed_previous = gamepad1.right_bumper;
-
         if (gamepad2.a && !a_pressed_previous) {
             gateLogic();
         }
         a_pressed_previous = gamepad2.a;
 
-        /*
+        if (!locked) {
+            follower.setTeleOpDrive(
+                    -gamepad1.left_stick_y,
+                    -gamepad1.left_stick_x,
+                    -gamepad1.right_stick_x,
+                    true);
+        }
+
+        if (gamepad1.x && !x_pressed_previous) {
+            locked = !locked; // Toggle the locked state
+            if (!locked) {
+                // If we just UNLOCKED, explicitly give control back to the driver
+                follower.startTeleopDrive();
+            } else {
+                follower.followPath(
+                        follower.pathBuilder()
+                                .addPath(new BezierLine(follower.getPose(), follower.getPose() ))
+                                .setConstantHeadingInterpolation(follower.getHeading())
+                                .build());
+            }
+        }
+        x_pressed_previous = gamepad1.x; // Update for the next loop
+
+
+
         flyWheelLogic();
         chamberLogic();
-        intake.setPower(1);
-
-         */
+        intake.setPower(-1);
 
         telemetry.addData("Target RPM", flyWheelDesiredRPM);
         telemetry.addData("Actual RPM Left", "%.2f", (leftFlyWheel.getVelocity() * 60) / flywheelTPR);
         telemetry.addData("Actual RPM Right", "%.2f", (rightFlyWheel.getVelocity() * 60) / flywheelTPR);
-        telemetry.addData("Follower is busy", follower.isBusy());
-        telemetry.addData("FTC Pos ", getRobotPoseFromCamera().toString());
-        telemetry.addData("Pedro Pos ", follower.getPose().toString());
         telemetry.update();
 
-    }
-
-    private Pose getRobotPoseFromCamera() {
-        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
-        if (currentDetections.isEmpty()) {
-            return follower.getPose();
-        }
-
-        AprilTagDetection detection = currentDetections.get(0);
-
-        if (detection.robotPose == null || detection.robotPose.getPosition() == null)
-            {
-                return follower.getPose();
-            } else {
-
-            double myX = detection.robotPose.getPosition().x;
-            double myY = detection.robotPose.getPosition().y;
-            double myYaw = detection.robotPose.getOrientation().getYaw(AngleUnit.DEGREES);
-
-            return new Pose(myX, myY, Math.toRadians(myYaw), FTCCoordinates.INSTANCE).getAsCoordinateSystem(PedroCoordinates.INSTANCE);
-        }
     }
 
     // Methods
@@ -316,44 +272,68 @@ public class compBotV3 extends OpMode {
         }
     }
 
-    /**
-     * Calculates the rotational power needed to face the TARGET_POINT.
-     * @return The calculated 'yaw' power, or 0.0 if no correction is needed.
-     */
-    private double getPointLockCorrection() {
-        // 1. Get the robot's current pose from the follower
-        Pose robotPose = follower.getPose();
+    private void initAprilTag() {
 
-        // 2. Calculate the difference in x and y from the robot to the target point
-        double deltaX = TARGET_POINT.getX() - robotPose.getX();
-        double deltaY = TARGET_POINT.getY() - robotPose.getY();
+        // Create the AprilTag processor.
+        aprilTag = new AprilTagProcessor.Builder()
 
-        // 3. Use atan2 to find the absolute angle from the robot to the target point
-        // This angle is in radians and follows the standard math convention
-        // (0 radians is pointing to the right, along the positive X axis).
-        double absoluteAngleToTarget = Math.atan2(deltaY, deltaX);
+                // The following default settings are available to un-comment and edit as needed.
+                //.setDrawAxes(false)
+                //.setDrawCubeProjection(false)
+                //.setDrawTagOutline(true)
+                //.setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
+                //.setTagLibrary(AprilTagGameDatabase.getCenterStageTagLibrary())
+                //.setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
 
-        // 4. Find the heading error. This is the difference between where the robot
-        // SHOULD be facing and where it IS facing.
-        // We use AngleUnit.normalizeRadians to handle wraparound (e.g., from +pi to -pi).
-        double headingError = AngleUnit.normalizeRadians(absoluteAngleToTarget - robotPose.getHeading());
 
-        // 5. Convert the error to degrees for the tolerance check (more intuitive)
-        double headingErrorDegrees = Math.toDegrees(headingError);
+                // == CAMERA CALIBRATION ==
+                // If you do not manually specify calibration parameters, the SDK will attempt
+                // to load a predefined calibration for your camera.
+                //.setLensIntrinsics(578.272, 578.272, 402.145, 221.506)
+                // ... these parameters are fx, fy, cx, cy.
 
-        telemetry.addData("Target Angle (Deg)", Math.toDegrees(absoluteAngleToTarget));
-        telemetry.addData("Robot Heading (Deg)", Math.toDegrees(robotPose.getHeading()));
-        telemetry.addData("Heading Error (Deg)", "%.2f", headingErrorDegrees);
+                .build();
 
-        // 6. Check if the error is outside our tolerance
-        if (Math.abs(headingErrorDegrees) > HEADING_TOLERANCE_DEGREES) {
-            // 7. If it is, apply the gain to the radian error to get corrective power
-            return headingError * POINT_LOCK_GAIN;
-        }
+        // Adjust Image Decimation to trade-off detection-range for detection-rate.
+        // eg: Some typical detection data using a Logitech C920 WebCam
+        // Decimation = 1 ..  Detect 2" Tag from 10 feet away at 10 Frames per second
+        // Decimation = 2 ..  Detect 2" Tag from 6  feet away at 22 Frames per second
+        // Decimation = 3 ..  Detect 2" Tag from 4  feet away at 30 Frames Per Second (default)
+        // Decimation = 3 ..  Detect 5" Tag from 10 feet away at 30 Frames Per Second (default)
+        // Note: Decimation can be changed on-the-fly to adapt during a match.
+        //aprilTag.setDecimation(3);
 
-        // 8. If we're on target, apply no correction
-        return 0.0;
+        // Create the vision portal by using a builder.
+        VisionPortal.Builder builder = new VisionPortal.Builder();
+
+        // Set the camera (webcam vs. built-in RC phone camera).
+
+        builder.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"));
+
+        // Choose a camera resolution. Not all cameras support all resolutions.
+        //builder.setCameraResolution(new Size(640, 480));
+
+        // Enable the RC preview (LiveView).  Set "false" to omit camera monitoring.
+        //builder.enableLiveView(true);
+
+        // Set the stream format; MJPEG uses less bandwidth than default YUY2.
+        //builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
+
+        // Choose whether or not LiveView stops if no processors are enabled.
+        // If set "true", monitor shows solid orange screen if no processors enabled.
+        // If set "false", monitor shows camera view without annotations.
+        //builder.setAutoStopLiveView(false);
+
+        // Set and enable the processor.
+        builder.addProcessor(aprilTag);
+
+        // Build the Vision Portal, using the above settings.
+        visionPortal = builder.build();
+
+        // Disable or re-enable the aprilTag processor at any time.
+        //visionPortal.setProcessorEnabled(aprilTag, true);
+
     }
 
-
 }
+

@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode; // make sure this aligns with class location
 
-import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
@@ -16,8 +15,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "RedThreeShooter", group = "Examples")
-public class redThreeShooter extends OpMode {
+@Autonomous(name = "ImposterThree", group = "Examples")
+public class imposterOpMode extends OpMode {
 
     double flyWheelTargetVelocity;
     double flyWheelRPM = 1750;
@@ -48,15 +47,15 @@ public class redThreeShooter extends OpMode {
         Path1 = follower
                 .pathBuilder()
                 .addPath(
-                        new BezierLine(new Pose(88, 17.75), new Pose(88, 87))
+                        new BezierLine(new Pose(56.614, ((17.75/2) + 4)), new Pose(56.614,87))
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(45))
+                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(135))
                 .build();
 
         Path2 = follower
                 .pathBuilder()
                 .addPath(
-                        new BezierLine(new Pose(88, 87), new Pose(88, 87))
+                        new BezierLine(new Pose(56, 87), new Pose(56, 87))
                 )
                 .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(180))
                 .build();
@@ -64,7 +63,7 @@ public class redThreeShooter extends OpMode {
         Path3 = follower
                 .pathBuilder()
                 .addPath(
-                        new BezierLine(new Pose(88,87), new Pose(88,110))
+                        new BezierLine(new Pose(56,87), new Pose(56,48))
                 )
                 .setLinearHeadingInterpolation(Math.toRadians(135) , Math.toRadians(90))
                 .build();
@@ -82,10 +81,12 @@ public class redThreeShooter extends OpMode {
                 lowerRightChamber.setPower(1);
                 upperLeftChamber.setPower(-1);
                 upperRightChamber.setPower(1);
-                intake.setPower(-1);
-                if (pathTimer.getElapsedTimeSeconds() > 14) {
+                intake.setPower(1);
+
+                if (pathTimer.getElapsedTimeSeconds() > 13) {
                     setPathState(0);
                 }
+
                 break;
             case 0:
                 follower.followPath(Path1,.75,true);
@@ -93,18 +94,19 @@ public class redThreeShooter extends OpMode {
                 break;
             case 2:
                 if (!follower.isBusy()) {
-                    specialChamber.setPower(-1);
+                    if (Math.abs(leftFlyWheel.getVelocity() - targetTPS) < 25){
+                        specialChamber.setPower(-1);
+                    } else {
+                        specialChamber.setPower(0);
+                    }
                     gate.setPosition(1);
                 }
-                if (pathTimer.getElapsedTimeSeconds() > 12)
+                if (opmodeTimer.getElapsedTimeSeconds() > 23)
                 {
                     setPathState(3);
-                    specialChamber.setPower(0);
-                    gate.setPosition(0);
                 }
                 break;
             case 3:
-                specialChamber.setPower(0);
                 lowerLeftChamber.setPower(0);
                 lowerRightChamber.setPower(0);
                 upperLeftChamber.setPower(0);
@@ -164,7 +166,7 @@ public class redThreeShooter extends OpMode {
         opmodeTimer.resetTimer();
 
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(new Pose(88, 17.75, Math.toRadians(90)));
+        follower.setStartingPose(new Pose(56, ((17.75/2) + 4), Math.toRadians(90)));
         Paths(follower);
 
         lowerLeftChamber = hardwareMap.get(CRServo.class, "backLeftS");
@@ -182,7 +184,7 @@ public class redThreeShooter extends OpMode {
         leftFlyWheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         intake = hardwareMap.get(DcMotor.class, "intake");
-        intake.setDirection(DcMotor.Direction.FORWARD);
+        intake.setDirection(DcMotor.Direction.REVERSE);
 
         gate = hardwareMap.get(Servo.class, "gate");
 

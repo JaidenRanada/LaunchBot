@@ -15,10 +15,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-
 @TeleOp(name="compBotV2")
 public class compBotV2 extends OpMode {
 
@@ -32,7 +28,7 @@ public class compBotV2 extends OpMode {
     CRServo upperRightChamber = null;
     CRServo specialChamber = null;
 
-    CRServo intake = null;
+    DcMotor intake = null;
 
     DcMotor leftFront = null;
     DcMotor leftBack = null;
@@ -55,8 +51,8 @@ public class compBotV2 extends OpMode {
 
     Servo gate = null;
 
-    AprilTagProcessor aprilTag = null;
-    VisionPortal visionPortal = null;
+    Servo light1 = null;
+    Servo light2 = null;
 
     @Override
     public void init() {
@@ -69,7 +65,7 @@ public class compBotV2 extends OpMode {
         specialChamber = hardwareMap.get(CRServo.class, "specialChamber");
 
         // Intake
-        intake = hardwareMap.get(CRServo.class, "intake");
+        intake = hardwareMap.get(DcMotor.class, "intake");
         intake.setDirection(CRServo.Direction.FORWARD);
 
         // Wheels
@@ -95,14 +91,8 @@ public class compBotV2 extends OpMode {
         //Gate
         gate = hardwareMap.get(Servo.class, "gate");
 
-        // Vision
-        aprilTag = new AprilTagProcessor.Builder()
-                .build();
-
-        visionPortal = new VisionPortal.Builder()
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
-                .addProcessor(aprilTag)
-                .build();
+        light1 = hardwareMap.get(Servo.class, "light1");
+        light2 = hardwareMap.get(Servo.class, "light2");
 
     }
 
@@ -110,6 +100,10 @@ public class compBotV2 extends OpMode {
 
     @Override
     public void loop() {
+
+        light1.setPosition(0.5);
+        light2.setPosition(0.75);
+
 
         if (gamepad2.a && !a_pressed_previous) {
             gateLogic();
@@ -119,7 +113,7 @@ public class compBotV2 extends OpMode {
         wheelLogic();
         flyWheelLogic();
         chamberLogic();
-        intake.setPower(1);
+        intake.setPower(-1);
 
         telemetry.addData("Target RPM", flyWheelDesiredRPM);
         telemetry.addData("Actual RPM Left", "%.2f", (leftFlyWheel.getVelocity() * 60) / flywheelTPR);
@@ -181,6 +175,7 @@ public class compBotV2 extends OpMode {
         upperLeftChamber.setPower(-1);
         upperRightChamber.setPower(1);
     }
+
     public void flyWheelLogic() {
 
         if (gamepad2.left_bumper) {
@@ -216,6 +211,7 @@ public class compBotV2 extends OpMode {
             specialChamber.setPower(-1);
         }
     }
+
 
 }
 

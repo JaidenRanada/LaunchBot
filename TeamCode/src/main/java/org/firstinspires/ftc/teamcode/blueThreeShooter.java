@@ -29,7 +29,7 @@ public class blueThreeShooter extends OpMode {
 
     Servo gate = null;
 
-    CRServo intake = null;
+    DcMotor intake = null;
 
     DcMotorEx leftFlyWheel = null;
     DcMotorEx rightFlyWheel = null;
@@ -47,7 +47,7 @@ public class blueThreeShooter extends OpMode {
         Path1 = follower
                 .pathBuilder()
                 .addPath(
-                        new BezierLine(new Pose(56, 17.75), new Pose(56, 87))
+                        new BezierLine(new Pose(56.614, (17.75/2)), new Pose(56.614,87))
                 )
                 .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(135))
                 .build();
@@ -166,7 +166,7 @@ public class blueThreeShooter extends OpMode {
         opmodeTimer.resetTimer();
 
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(new Pose(56, 17.75, Math.toRadians(90)));
+        follower.setStartingPose(new Pose(56, (17.75/2), Math.toRadians(90)));
         Paths(follower);
 
         lowerLeftChamber = hardwareMap.get(CRServo.class, "backLeftS");
@@ -183,8 +183,8 @@ public class blueThreeShooter extends OpMode {
         rightFlyWheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftFlyWheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        intake = hardwareMap.get(CRServo.class, "intake");
-        intake.setDirection(CRServo.Direction.FORWARD);
+        intake = hardwareMap.get(DcMotor.class, "intake");
+        intake.setDirection(CRServo.Direction.REVERSE);
 
         gate = hardwareMap.get(Servo.class, "gate");
 
